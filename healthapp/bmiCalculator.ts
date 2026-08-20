@@ -1,3 +1,5 @@
+import { isNotNumber } from './utils.js';
+
 export const calculateBmi = (heightCm: number, weightKg: number): string => {
   const heightInMeters = heightCm / 100;
   const bmi = weightKg / (heightInMeters * heightInMeters);
@@ -12,4 +14,31 @@ export const calculateBmi = (heightCm: number, weightKg: number): string => {
   return 'Obese (Class III)';
 };
 
-console.log(calculateBmi(180, 74));
+const parseBmiArguments = (args: string[]): { height: number; weight: number } => {
+  if (args.length < 4) throw new Error('Not enough arguments. Provide height (cm) and weight (kg).');
+  if (args.length > 4) throw new Error('Too many arguments. Provide only height (cm) and weight (kg).');
+
+  if (!isNotNumber(args[2]) && !isNotNumber(args[3])) {
+    const height = Number(args[2]);
+    const weight = Number(args[3]);
+
+    if (height <= 0 || weight <= 0) {
+      throw new Error('Height and weight must be positive numbers!');
+    }
+
+    return { height, weight };
+  } else {
+    throw new Error('Provided values were not numbers!');
+  }
+};
+
+try {
+  const { height, weight } = parseBmiArguments(process.argv);
+  console.log(calculateBmi(height, weight));
+} catch (error: unknown) {
+  let errorMessage = 'Something went wrong.';
+  if (error instanceof Error) {
+    errorMessage += ' Error: ' + error.message;
+  }
+  console.log(errorMessage);
+}
