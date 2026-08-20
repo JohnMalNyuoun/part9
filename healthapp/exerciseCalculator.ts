@@ -1,6 +1,6 @@
 import { isNotNumber } from './utils.js';
 
-interface Result {
+export interface Result {
   periodLength: number;
   trainingDays: number;
   success: boolean;
@@ -42,29 +42,31 @@ export const calculateExercises = (dailyHours: number[], target: number): Result
   };
 };
 
-const parseExerciseArguments = (args: string[]): { target: number; dailyHours: number[] } => {
-  if (args.length < 4) throw new Error('Not enough arguments. Provide a target and at least one day of exercise hours.');
+if (process.argv[1] === import.meta.filename) {
+  const parseExerciseArguments = (args: string[]): { target: number; dailyHours: number[] } => {
+    if (args.length < 4) throw new Error('Not enough arguments.');
 
-  const rawTarget = args[2];
-  const rawHours = args.slice(3);
+    const rawTarget = args[2];
+    const rawHours = args.slice(3);
 
-  if (isNotNumber(rawTarget) || rawHours.some(h => isNotNumber(h))) {
-    throw new Error('Provided values were not numbers!');
-  }
+    if (isNotNumber(rawTarget) || rawHours.some(h => isNotNumber(h))) {
+      throw new Error('Provided values were not numbers!');
+    }
 
-  return {
-    target: Number(rawTarget),
-    dailyHours: rawHours.map(Number)
+    return {
+      target: Number(rawTarget),
+      dailyHours: rawHours.map(Number)
+    };
   };
-};
 
-try {
-  const { target, dailyHours } = parseExerciseArguments(process.argv);
-  console.log(calculateExercises(dailyHours, target));
-} catch (error: unknown) {
-  let errorMessage = 'Something went wrong.';
-  if (error instanceof Error) {
-    errorMessage += ' Error: ' + error.message;
+  try {
+    const { target, dailyHours } = parseExerciseArguments(process.argv);
+    console.log(calculateExercises(dailyHours, target));
+  } catch (error: unknown) {
+    let errorMessage = 'Something went wrong.';
+    if (error instanceof Error) {
+      errorMessage += ' Error: ' + error.message;
+    }
+    console.log(errorMessage);
   }
-  console.log(errorMessage);
 }
