@@ -13,7 +13,7 @@ export default defineConfig({
     trace: 'on-first-retry',
   },
   webServer: {
-    command: 'npm run start --prefix ..',
+    command: 'npm run start --prefix ../healthapp',
     url: 'http://localhost:3000/hello',
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,
