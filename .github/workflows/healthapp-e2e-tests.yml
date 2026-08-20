@@ -14,9 +14,7 @@ jobs:
           node-version: 20
       - name: Install root dependencies
         run: npm install
-      - name: Start app
-        run: npm start &
-      - name: Run E2E Tests
+      - name: Install test dependencies and run Playwright
         run: |
           cd healthapp-tests
           npm install
