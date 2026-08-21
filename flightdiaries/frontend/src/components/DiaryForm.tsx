@@ -1,6 +1,13 @@
 import { useState } from 'react';
 import axios from 'axios';
-import { type DiaryEntry, type NewDiaryEntry, type Visibility, type Weather } from '../types';
+import {
+  type DiaryEntry,
+  type NewDiaryEntry,
+  type Visibility,
+  type Weather,
+  visibilityValues,
+  weatherValues,
+} from '../types';
 import { createDiary } from '../services/diaryService';
 
 interface DiaryFormProps {
@@ -9,8 +16,8 @@ interface DiaryFormProps {
 
 const DiaryForm = ({ onAddDiary }: DiaryFormProps) => {
   const [date, setDate] = useState('');
-  const [visibility, setVisibility] = useState('');
-  const [weather, setWeather] = useState('');
+  const [visibility, setVisibility] = useState<Visibility>('great');
+  const [weather, setWeather] = useState<Weather>('sunny');
   const [comment, setComment] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -21,12 +28,14 @@ const DiaryForm = ({ onAddDiary }: DiaryFormProps) => {
     }, 5000);
   };
 
-  // Helper function to turn Zod error objects/arrays into a plain, simple string
   const extractSimpleError = (data: unknown): string => {
     if (typeof data === 'string') return data;
 
     if (Array.isArray(data)) {
-      return data.map((item) => item.message || String(item)).filter(Boolean).join(', ');
+      return data
+        .map((item: { message?: string }) => item.message || String(item))
+        .filter(Boolean)
+        .join(', ');
     }
 
     if (typeof data === 'object' && data !== null) {
@@ -44,11 +53,10 @@ const DiaryForm = ({ onAddDiary }: DiaryFormProps) => {
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    // Cast string inputs to expected types for TypeScript
     const newEntry: NewDiaryEntry = {
       date,
-      visibility: visibility as Visibility,
-      weather: weather as Weather,
+      visibility,
+      weather,
       comment,
     };
 
@@ -56,8 +64,6 @@ const DiaryForm = ({ onAddDiary }: DiaryFormProps) => {
       const addedEntry = await createDiary(newEntry);
       onAddDiary(addedEntry);
       setDate('');
-      setVisibility('');
-      setWeather('');
       setComment('');
     } catch (error: unknown) {
       if (axios.isAxiosError(error)) {
@@ -87,20 +93,34 @@ const DiaryForm = ({ onAddDiary }: DiaryFormProps) => {
 
         <div>
           visibility{' '}
-          <input
-            type="text"
-            value={visibility}
-            onChange={({ target }) => setVisibility(target.value)}
-          />
+          {visibilityValues.map((v) => (
+            <label key={v} style={{ marginRight: '0.5rem' }}>
+              <input
+                type="radio"
+                name="visibility"
+                value={v}
+                checked={visibility === v}
+                onChange={() => setVisibility(v)}
+              />
+              {v}
+            </label>
+          ))}
         </div>
 
         <div>
           weather{' '}
-          <input
-            type="text"
-            value={weather}
-            onChange={({ target }) => setWeather(target.value)}
-          />
+          {weatherValues.map((w) => (
+            <label key={w} style={{ marginRight: '0.5rem' }}>
+              <input
+                type="radio"
+                name="weather"
+                value={w}
+                checked={weather === w}
+                onChange={() => setWeather(w)}
+              />
+              {w}
+            </label>
+          ))}
         </div>
 
         <div>
