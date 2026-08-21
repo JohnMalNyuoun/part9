@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import type { DiaryEntry, NewDiaryEntry } from '../types';
+import axios from 'axios';
+import { type DiaryEntry, type NewDiaryEntry, type Visibility, type Weather } from '../types';
 import { createDiary } from '../services/diaryService';
 
 interface DiaryFormProps {
@@ -11,29 +12,69 @@ const DiaryForm = ({ onAddDiary }: DiaryFormProps) => {
   const [visibility, setVisibility] = useState('');
   const [weather, setWeather] = useState('');
   const [comment, setComment] = useState('');
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const notifyError = (msg: string) => {
+    setErrorMessage(msg);
+    setTimeout(() => {
+      setErrorMessage(null);
+    }, 5000);
+  };
+
+  // Helper function to turn Zod error objects/arrays into a plain, simple string
+  const extractSimpleError = (data: unknown): string => {
+    if (typeof data === 'string') return data;
+
+    if (Array.isArray(data)) {
+      return data.map((item) => item.message || String(item)).filter(Boolean).join(', ');
+    }
+
+    if (typeof data === 'object' && data !== null) {
+      if ('error' in data) {
+        return extractSimpleError((data as { error: unknown }).error);
+      }
+      if ('message' in data && typeof data.message === 'string') {
+        return data.message;
+      }
+    }
+
+    return 'Something went wrong';
+  };
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
+    // Cast string inputs to expected types for TypeScript
     const newEntry: NewDiaryEntry = {
       date,
-      visibility: visibility as NewDiaryEntry['visibility'],
-      weather: weather as NewDiaryEntry['weather'],
+      visibility: visibility as Visibility,
+      weather: weather as Weather,
       comment,
     };
 
-    createDiary(newEntry).then((addedEntry) => {
+    try {
+      const addedEntry = await createDiary(newEntry);
       onAddDiary(addedEntry);
       setDate('');
       setVisibility('');
       setWeather('');
       setComment('');
-    });
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        const errorText = extractSimpleError(error.response?.data);
+        notifyError(errorText);
+      } else {
+        notifyError('An unexpected error occurred');
+      }
+    }
   };
 
   return (
     <div>
       <h3>Add new entry</h3>
+      {errorMessage && (
+        <p style={{ color: 'red', margin: '0.5rem 0' }}>{errorMessage}</p>
+      )}
       <form onSubmit={handleSubmit}>
         <div>
           date{' '}
@@ -43,6 +84,7 @@ const DiaryForm = ({ onAddDiary }: DiaryFormProps) => {
             onChange={({ target }) => setDate(target.value)}
           />
         </div>
+
         <div>
           visibility{' '}
           <input
@@ -51,6 +93,7 @@ const DiaryForm = ({ onAddDiary }: DiaryFormProps) => {
             onChange={({ target }) => setVisibility(target.value)}
           />
         </div>
+
         <div>
           weather{' '}
           <input
@@ -59,6 +102,7 @@ const DiaryForm = ({ onAddDiary }: DiaryFormProps) => {
             onChange={({ target }) => setWeather(target.value)}
           />
         </div>
+
         <div>
           comment{' '}
           <input
@@ -67,6 +111,7 @@ const DiaryForm = ({ onAddDiary }: DiaryFormProps) => {
             onChange={({ target }) => setComment(target.value)}
           />
         </div>
+
         <button type="submit">add</button>
       </form>
     </div>
