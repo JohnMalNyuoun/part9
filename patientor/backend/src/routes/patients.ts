@@ -1,4 +1,5 @@
-import express, { Response } from 'express';
+import express from 'express';
+import type { Response } from 'express';
 import { z } from 'zod';
 import patientService from '../services/patientService.js';
 import toNewPatient from '../utils.js';
