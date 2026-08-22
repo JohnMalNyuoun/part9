@@ -56,6 +56,12 @@ export type Entry =
   | OccupationalHealthcareEntry
   | HealthCheckEntry;
 
+// Helper type for omitting 'id' from union members
+type UnionOmit<T, K extends keyof any> = T extends any ? Omit<T, K> : never;
+
+// Omit 'id' from entries for form submission
+export type EntryWithoutId = UnionOmit<Entry, 'id'>;
+
 export interface Patient {
   id: string;
   name: string;

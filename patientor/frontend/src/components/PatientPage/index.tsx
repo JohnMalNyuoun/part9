@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { Patient, Gender, Diagnosis, Entry } from "../../types";
+import axios from "axios";
+import { Patient, Gender, Diagnosis, Entry, EntryWithoutId } from "../../types";
 import patientService from "../../services/patients";
 import diagnosisService from "../../services/diagnoses";
 import EntryDetails from "./EntryDetails";
+import AddEntryForm from "./AddEntryForm";
 
-import { Typography, Box, List, ListItem, ListItemText, Paper } from "@mui/material";
+import { Typography, Box, List, ListItem, ListItemText, Paper, Button } from "@mui/material";
 import FemaleIcon from "@mui/icons-material/Female";
 import MaleIcon from "@mui/icons-material/Male";
 import TransgenderIcon from "@mui/icons-material/Transgender";
@@ -14,6 +16,8 @@ const PatientPage = () => {
   const { id } = useParams<{ id: string }>();
   const [patient, setPatient] = useState<Patient | null>(null);
   const [diagnoses, setDiagnoses] = useState<Diagnosis[]>([]);
+  const [showForm, setShowForm] = useState<boolean>(false);
+  const [error, setError] = useState<string | undefined>();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -35,6 +39,33 @@ const PatientPage = () => {
   if (!patient) {
     return <Typography variant="h6">Loading...</Typography>;
   }
+
+  const submitNewEntry = async (values: EntryWithoutId) => {
+    try {
+      if (id) {
+        const newEntry = await patientService.createEntry(id, values);
+        setPatient({
+          ...patient,
+          entries: patient.entries.concat(newEntry as unknown as Entry),
+        });
+        setShowForm(false);
+        setError(undefined);
+      }
+    } catch (e: unknown) {
+      if (axios.isAxiosError(e)) {
+        if (e?.response?.data && Array.isArray(e.response.data.error)) {
+          const message = e.response.data.error.map((issue: { message: string }) => issue.message).join(", ");
+          setError(message);
+        } else if (typeof e?.response?.data?.error === "string") {
+          setError(e.response.data.error);
+        } else {
+          setError("Failed to submit new entry.");
+        }
+      } else {
+        setError("Unknown error occurred");
+      }
+    }
+  };
 
   const getGenderIcon = (gender: Gender) => {
     switch (gender) {
@@ -59,6 +90,25 @@ const PatientPage = () => {
       </Typography>
       <Typography>ssn: {patient.ssn}</Typography>
       <Typography>occupation: {patient.occupation}</Typography>
+
+      {showForm && (
+        <AddEntryForm
+          onSubmit={submitNewEntry}
+          onCancel={() => setShowForm(false)}
+          error={error}
+        />
+      )}
+
+      {!showForm && (
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={() => setShowForm(true)}
+          sx={{ marginTop: 2 }}
+        >
+          Add New Entry
+        </Button>
+      )}
 
       <Typography variant="h5" style={{ marginTop: "20px", fontWeight: "bold" }}>
         entries
