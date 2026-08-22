@@ -4,13 +4,14 @@ export interface Diagnosis {
   latin?: string;
 }
 
-export const Gender = {
-  Male: 'male',
-  Female: 'female',
-  Other: 'other',
-} as const;
+export enum Gender {
+  Male = 'male',
+  Female = 'female',
+  Other = 'other',
+}
 
-export type Gender = typeof Gender[keyof typeof Gender];
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface Entry {}
 
 export interface Patient {
   id: string;
@@ -19,7 +20,11 @@ export interface Patient {
   ssn: string;
   gender: Gender;
   occupation: string;
+  entries: Entry[];
 }
 
-export type NonSensitivePatient = Omit<Patient, 'ssn'>;
-export type NewPatient = Omit<Patient, 'id'>;
+export type NonSensitivePatient = Omit<Patient, 'ssn' | 'entries'>;
+
+// NewPatient explicitly omits 'id' and 'entries' because the service generates 'id'
+// and initializes 'entries' as an empty array.
+export type NewPatient = Omit<Patient, 'id' | 'entries'>;

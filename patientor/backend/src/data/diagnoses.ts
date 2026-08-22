@@ -1,13 +1,11 @@
-import type { Diagnosis } from '../src/types.js';
+import type { Diagnosis } from "../types.js";
 
 const diagnoses: Diagnosis[] = [
   {
     code: "M24.2",
     name: "Disorder of ligament",
-    latin: "Morbositas ligamenti"
+    latin: "Morbositas ligamenti",
   },
-  
 ];
 
 export default diagnoses;
-
