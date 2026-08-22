@@ -14,19 +14,20 @@ const PatientPage = () => {
   const [diagnoses, setDiagnoses] = useState<Diagnosis[]>([]);
 
   useEffect(() => {
-    const fetchPatientAndDiagnoses = async () => {
+    const fetchData = async () => {
       try {
+        const fetchedDiagnoses = await diagnosisService.getAll();
+        setDiagnoses(fetchedDiagnoses);
+
         if (id) {
           const fetchedPatient = await patientService.getOne(id);
           setPatient(fetchedPatient);
         }
-        const fetchedDiagnoses = await diagnosisService.getAll();
-        setDiagnoses(fetchedDiagnoses);
       } catch (e) {
         console.error(e);
       }
     };
-    void fetchPatientAndDiagnoses();
+    void fetchData();
   }, [id]);
 
   if (!patient) {
@@ -66,17 +67,17 @@ const PatientPage = () => {
           <Typography variant="body1">
             <strong>{entry.date}</strong> <em>{entry.description}</em>
           </Typography>
-            {entry.diagnosisCodes && entry.diagnosisCodes.length > 0 && (
-  <List dense>
-    {entry.diagnosisCodes.map((code) => (
-      <ListItem key={code} disablePadding>
-        <ListItemText
-          primary={`${code} ${getDiagnosisName(code)}`}
-        />
-      </ListItem>
-    ))}
-  </List>
-)}
+          {entry.diagnosisCodes && entry.diagnosisCodes.length > 0 && (
+            <List dense>
+              {entry.diagnosisCodes.map((code) => (
+                <ListItem key={code} disablePadding>
+                  <ListItemText
+                    primary={`${code} ${getDiagnosisName(code)}`}
+                  />
+                </ListItem>
+              ))}
+            </List>
+          )}
         </Box>
       ))}
     </Box>
