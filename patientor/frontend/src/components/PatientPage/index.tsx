@@ -92,12 +92,13 @@ const PatientPage = () => {
       <Typography>occupation: {patient.occupation}</Typography>
 
       {showForm && (
-        <AddEntryForm
-          onSubmit={submitNewEntry}
-          onCancel={() => setShowForm(false)}
-          error={error}
-        />
-      )}
+  <AddEntryForm
+    onSubmit={submitNewEntry}
+    onCancel={() => setShowForm(false)}
+    diagnoses={diagnoses}
+    error={error}
+  />
+)}
 
       {!showForm && (
         <Button

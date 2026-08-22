@@ -9,25 +9,29 @@ import {
   Select,
   InputLabel,
   FormControl,
+  OutlinedInput,
+  Chip,
+  SelectChangeEvent,
 } from "@mui/material";
-import { EntryWithoutId, HealthCheckRating } from "../../types";
+import { EntryWithoutId, HealthCheckRating, Diagnosis } from "../../types";
 
 interface Props {
   onCancel: () => void;
   onSubmit: (values: EntryWithoutId) => void;
+  diagnoses: Diagnosis[];
   error?: string;
 }
 
 type EntryType = "HealthCheck" | "Hospital" | "OccupationalHealthcare";
 
-const AddEntryForm = ({ onCancel, onSubmit, error }: Props) => {
+const AddEntryForm = ({ onCancel, onSubmit, diagnoses, error }: Props) => {
   const [entryType, setEntryType] = useState<EntryType>("HealthCheck");
 
-  // Common fields
+  // Base fields
   const [description, setDescription] = useState("");
   const [date, setDate] = useState("");
   const [specialist, setSpecialist] = useState("");
-  const [diagnosisCodes, setDiagnosisCodes] = useState("");
+  const [diagnosisCodes, setDiagnosisCodes] = useState<string[]>([]);
 
   // HealthCheck field
   const [healthCheckRating, setHealthCheckRating] = useState<HealthCheckRating>(
@@ -43,17 +47,19 @@ const AddEntryForm = ({ onCancel, onSubmit, error }: Props) => {
   const [sickLeaveStartDate, setSickLeaveStartDate] = useState("");
   const [sickLeaveEndDate, setSickLeaveEndDate] = useState("");
 
+  const handleDiagnosisCodesChange = (event: SelectChangeEvent<typeof diagnosisCodes>) => {
+    const { target: { value } } = event;
+    setDiagnosisCodes(typeof value === "string" ? value.split(",") : value);
+  };
+
   const addEntry = (event: SyntheticEvent) => {
     event.preventDefault();
-    const parsedDiagnosisCodes = diagnosisCodes
-      ? diagnosisCodes.split(",").map((c) => c.trim())
-      : [];
 
     const baseValues = {
       description,
       date,
       specialist,
-      diagnosisCodes: parsedDiagnosisCodes,
+      diagnosisCodes,
     };
 
     switch (entryType) {
@@ -133,13 +139,30 @@ const AddEntryForm = ({ onCancel, onSubmit, error }: Props) => {
           onChange={({ target }) => setSpecialist(target.value)}
           margin="normal"
         />
-        <TextField
-          label="Diagnosis codes (comma separated)"
-          fullWidth
-          value={diagnosisCodes}
-          onChange={({ target }) => setDiagnosisCodes(target.value)}
-          margin="normal"
-        />
+
+        {/* Diagnosis Codes Multi-Select */}
+        <FormControl fullWidth margin="normal">
+          <InputLabel>Diagnosis Codes</InputLabel>
+          <Select
+            multiple
+            value={diagnosisCodes}
+            onChange={handleDiagnosisCodesChange}
+            input={<OutlinedInput label="Diagnosis Codes" />}
+            renderValue={(selected) => (
+              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                {selected.map((value) => (
+                  <Chip key={value} label={value} />
+                ))}
+              </Box>
+            )}
+          >
+            {diagnoses.map((d) => (
+              <MenuItem key={d.code} value={d.code}>
+                {d.code} - {d.name}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
 
         {/* Dynamic Fields for HealthCheck */}
         {entryType === "HealthCheck" && (
