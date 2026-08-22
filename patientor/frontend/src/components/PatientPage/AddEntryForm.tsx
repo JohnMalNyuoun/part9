@@ -18,35 +18,97 @@ interface Props {
   error?: string;
 }
 
+type EntryType = "HealthCheck" | "Hospital" | "OccupationalHealthcare";
+
 const AddEntryForm = ({ onCancel, onSubmit, error }: Props) => {
+  const [entryType, setEntryType] = useState<EntryType>("HealthCheck");
+
+  // Common fields
   const [description, setDescription] = useState("");
   const [date, setDate] = useState("");
   const [specialist, setSpecialist] = useState("");
+  const [diagnosisCodes, setDiagnosisCodes] = useState("");
+
+  // HealthCheck field
   const [healthCheckRating, setHealthCheckRating] = useState<HealthCheckRating>(
     HealthCheckRating.Healthy
   );
-  const [diagnosisCodes, setDiagnosisCodes] = useState("");
+
+  // Hospital fields
+  const [dischargeDate, setDischargeDate] = useState("");
+  const [dischargeCriteria, setDischargeCriteria] = useState("");
+
+  // OccupationalHealthcare fields
+  const [employerName, setEmployerName] = useState("");
+  const [sickLeaveStartDate, setSickLeaveStartDate] = useState("");
+  const [sickLeaveEndDate, setSickLeaveEndDate] = useState("");
 
   const addEntry = (event: SyntheticEvent) => {
     event.preventDefault();
-    onSubmit({
-      type: "HealthCheck",
+    const parsedDiagnosisCodes = diagnosisCodes
+      ? diagnosisCodes.split(",").map((c) => c.trim())
+      : [];
+
+    const baseValues = {
       description,
       date,
       specialist,
-      healthCheckRating,
-      diagnosisCodes: diagnosisCodes
-        ? diagnosisCodes.split(",").map((c) => c.trim())
-        : [],
-    });
+      diagnosisCodes: parsedDiagnosisCodes,
+    };
+
+    switch (entryType) {
+      case "HealthCheck":
+        onSubmit({
+          ...baseValues,
+          type: "HealthCheck",
+          healthCheckRating,
+        });
+        break;
+      case "Hospital":
+        onSubmit({
+          ...baseValues,
+          type: "Hospital",
+          discharge: {
+            date: dischargeDate,
+            criteria: dischargeCriteria,
+          },
+        });
+        break;
+      case "OccupationalHealthcare":
+        onSubmit({
+          ...baseValues,
+          type: "OccupationalHealthcare",
+          employerName,
+          sickLeave:
+            sickLeaveStartDate && sickLeaveEndDate
+              ? { startDate: sickLeaveStartDate, endDate: sickLeaveEndDate }
+              : undefined,
+        });
+        break;
+    }
   };
 
   return (
     <Box sx={{ border: "2px dashed gray", p: 2, mb: 2, borderRadius: 1 }}>
       <Typography variant="h6" sx={{ fontWeight: "bold", mb: 1 }}>
-        New HealthCheck entry
+        New Entry
       </Typography>
+
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+
+      <FormControl fullWidth margin="normal">
+        <InputLabel>Entry Type</InputLabel>
+        <Select
+          value={entryType}
+          label="Entry Type"
+          onChange={({ target }) => setEntryType(target.value as EntryType)}
+        >
+          <MenuItem value="HealthCheck">Health Check</MenuItem>
+          <MenuItem value="Hospital">Hospital</MenuItem>
+          <MenuItem value="OccupationalHealthcare">Occupational Healthcare</MenuItem>
+        </Select>
+      </FormControl>
+
       <form onSubmit={addEntry}>
         <TextField
           label="Description"
@@ -71,19 +133,6 @@ const AddEntryForm = ({ onCancel, onSubmit, error }: Props) => {
           onChange={({ target }) => setSpecialist(target.value)}
           margin="normal"
         />
-        <FormControl fullWidth margin="normal">
-          <InputLabel>Health Check Rating</InputLabel>
-          <Select
-            value={healthCheckRating}
-            label="Health Check Rating"
-            onChange={({ target }) => setHealthCheckRating(Number(target.value))}
-          >
-            <MenuItem value={HealthCheckRating.Healthy}>0 - Healthy</MenuItem>
-            <MenuItem value={HealthCheckRating.LowRisk}>1 - Low Risk</MenuItem>
-            <MenuItem value={HealthCheckRating.HighRisk}>2 - High Risk</MenuItem>
-            <MenuItem value={HealthCheckRating.CriticalRisk}>3 - Critical Risk</MenuItem>
-          </Select>
-        </FormControl>
         <TextField
           label="Diagnosis codes (comma separated)"
           fullWidth
@@ -91,6 +140,83 @@ const AddEntryForm = ({ onCancel, onSubmit, error }: Props) => {
           onChange={({ target }) => setDiagnosisCodes(target.value)}
           margin="normal"
         />
+
+        {/* Dynamic Fields for HealthCheck */}
+        {entryType === "HealthCheck" && (
+          <FormControl fullWidth margin="normal">
+            <InputLabel>Health Check Rating</InputLabel>
+            <Select
+              value={healthCheckRating}
+              label="Health Check Rating"
+              onChange={({ target }) => setHealthCheckRating(Number(target.value))}
+            >
+              <MenuItem value={HealthCheckRating.Healthy}>0 - Healthy</MenuItem>
+              <MenuItem value={HealthCheckRating.LowRisk}>1 - Low Risk</MenuItem>
+              <MenuItem value={HealthCheckRating.HighRisk}>2 - High Risk</MenuItem>
+              <MenuItem value={HealthCheckRating.CriticalRisk}>3 - Critical Risk</MenuItem>
+            </Select>
+          </FormControl>
+        )}
+
+        {/* Dynamic Fields for Hospital */}
+        {entryType === "Hospital" && (
+          <Box sx={{ mt: 1 }}>
+            <Typography variant="subtitle2" sx={{ fontWeight: "bold" }}>
+              Discharge Information
+            </Typography>
+            <TextField
+              label="Discharge Date"
+              type="date"
+              fullWidth
+              InputLabelProps={{ shrink: true }}
+              value={dischargeDate}
+              onChange={({ target }) => setDischargeDate(target.value)}
+              margin="normal"
+            />
+            <TextField
+              label="Discharge Criteria"
+              fullWidth
+              value={dischargeCriteria}
+              onChange={({ target }) => setDischargeCriteria(target.value)}
+              margin="normal"
+            />
+          </Box>
+        )}
+
+        {/* Dynamic Fields for OccupationalHealthcare */}
+        {entryType === "OccupationalHealthcare" && (
+          <Box sx={{ mt: 1 }}>
+            <TextField
+              label="Employer Name"
+              fullWidth
+              value={employerName}
+              onChange={({ target }) => setEmployerName(target.value)}
+              margin="normal"
+            />
+            <Typography variant="subtitle2" sx={{ fontWeight: "bold", mt: 1 }}>
+              Sick Leave (Optional)
+            </Typography>
+            <TextField
+              label="Start Date"
+              type="date"
+              fullWidth
+              InputLabelProps={{ shrink: true }}
+              value={sickLeaveStartDate}
+              onChange={({ target }) => setSickLeaveStartDate(target.value)}
+              margin="normal"
+            />
+            <TextField
+              label="End Date"
+              type="date"
+              fullWidth
+              InputLabelProps={{ shrink: true }}
+              value={sickLeaveEndDate}
+              onChange={({ target }) => setSickLeaveEndDate(target.value)}
+              margin="normal"
+            />
+          </Box>
+        )}
+
         <Box sx={{ display: "flex", justifyContent: "space-between", mt: 2 }}>
           <Button color="secondary" variant="contained" type="button" onClick={onCancel}>
             Cancel
