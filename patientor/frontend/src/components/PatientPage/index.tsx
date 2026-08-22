@@ -3,7 +3,9 @@ import { useParams } from "react-router-dom";
 import { Patient, Gender, Diagnosis, Entry } from "../../types";
 import patientService from "../../services/patients";
 import diagnosisService from "../../services/diagnoses";
-import { Typography, Box, List, ListItem, ListItemText } from "@mui/material";
+import EntryDetails from "./EntryDetails";
+
+import { Typography, Box, List, ListItem, ListItemText, Paper } from "@mui/material";
 import FemaleIcon from "@mui/icons-material/Female";
 import MaleIcon from "@mui/icons-material/Male";
 import TransgenderIcon from "@mui/icons-material/Transgender";
@@ -63,10 +65,8 @@ const PatientPage = () => {
       </Typography>
 
       {patient.entries.map((entry: Entry) => (
-        <Box key={entry.id} sx={{ marginTop: 2, marginBottom: 2 }}>
-          <Typography variant="body1">
-            <strong>{entry.date}</strong> <em>{entry.description}</em>
-          </Typography>
+        <Paper key={entry.id} variant="outlined" sx={{ padding: 2, marginTop: 2, marginBottom: 2 }}>
+          <EntryDetails entry={entry} />
           {entry.diagnosisCodes && entry.diagnosisCodes.length > 0 && (
             <List dense>
               {entry.diagnosisCodes.map((code) => (
@@ -78,7 +78,7 @@ const PatientPage = () => {
               ))}
             </List>
           )}
-        </Box>
+        </Paper>
       ))}
     </Box>
   );
