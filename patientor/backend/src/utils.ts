@@ -1,16 +1,62 @@
-import { z } from 'zod';
-import { Gender } from './types.js';
+import { z } from "zod";
+import { Gender, HealthCheckRating, NewPatient, NewEntry } from "./types.js";
 
-export const newPatientSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  dateOfBirth: z.string().date('Invalid date format (expected YYYY-MM-DD)'),
-  ssn: z.string().min(1, 'SSN is required'),
+export const NewPatientSchema = z.object({
+  name: z.string(),
+  dateOfBirth: z.string().date(),
+  ssn: z.string(),
   gender: z.nativeEnum(Gender),
-  occupation: z.string().min(1, 'Occupation is required'),
+  occupation: z.string(),
 });
 
-const toNewPatient = (object: unknown) => {
-  return newPatientSchema.parse(object);
+const toNewPatient = (object: unknown): NewPatient => {
+  return NewPatientSchema.parse(object);
+};
+
+const baseEntrySchema = z.object({
+  description: z.string().min(1),
+  date: z.string().date(),
+  specialist: z.string().min(1),
+  diagnosisCodes: z.array(z.string()).optional(),
+});
+
+const healthCheckEntrySchema = baseEntrySchema.extend({
+  type: z.literal("HealthCheck"),
+  healthCheckRating: z.union([
+    z.literal(HealthCheckRating.Healthy),
+    z.literal(HealthCheckRating.LowRisk),
+    z.literal(HealthCheckRating.HighRisk),
+    z.literal(HealthCheckRating.CriticalRisk),
+  ]),
+});
+
+const hospitalEntrySchema = baseEntrySchema.extend({
+  type: z.literal("Hospital"),
+  discharge: z.object({
+    date: z.string().date(),
+    criteria: z.string().min(1),
+  }),
+});
+
+const occupationalHealthcareEntrySchema = baseEntrySchema.extend({
+  type: z.literal("OccupationalHealthcare"),
+  employerName: z.string().min(1),
+  sickLeave: z
+    .object({
+      startDate: z.string().date(),
+      endDate: z.string().date(),
+    })
+    .optional(),
+});
+
+export const NewEntrySchema = z.discriminatedUnion("type", [
+  healthCheckEntrySchema,
+  hospitalEntrySchema,
+  occupationalHealthcareEntrySchema,
+]);
+
+export const toNewEntry = (object: unknown): NewEntry => {
+  return NewEntrySchema.parse(object);
 };
 
 export default toNewPatient;
