@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { Patient, Gender } from "../../types";
+import { Patient, Gender, Diagnosis, Entry } from "../../types";
 import patientService from "../../services/patients";
-import { Typography, Box } from "@mui/material";
+import diagnosisService from "../../services/diagnoses";
+import { Typography, Box, List, ListItem, ListItemText } from "@mui/material";
 import FemaleIcon from "@mui/icons-material/Female";
 import MaleIcon from "@mui/icons-material/Male";
 import TransgenderIcon from "@mui/icons-material/Transgender";
@@ -10,19 +11,22 @@ import TransgenderIcon from "@mui/icons-material/Transgender";
 const PatientPage = () => {
   const { id } = useParams<{ id: string }>();
   const [patient, setPatient] = useState<Patient | null>(null);
+  const [diagnoses, setDiagnoses] = useState<Diagnosis[]>([]);
 
   useEffect(() => {
-    const fetchPatient = async () => {
-      if (id) {
-        try {
+    const fetchPatientAndDiagnoses = async () => {
+      try {
+        if (id) {
           const fetchedPatient = await patientService.getOne(id);
           setPatient(fetchedPatient);
-        } catch (e) {
-          console.error(e);
         }
+        const fetchedDiagnoses = await diagnosisService.getAll();
+        setDiagnoses(fetchedDiagnoses);
+      } catch (e) {
+        console.error(e);
       }
     };
-    void fetchPatient();
+    void fetchPatientAndDiagnoses();
   }, [id]);
 
   if (!patient) {
@@ -40,6 +44,11 @@ const PatientPage = () => {
     }
   };
 
+  const getDiagnosisName = (code: string): string => {
+    const diagnosis = diagnoses.find((d) => d.code === code);
+    return diagnosis ? diagnosis.name : "";
+  };
+
   return (
     <Box sx={{ marginTop: 2 }}>
       <Typography variant="h4" style={{ fontWeight: "bold", marginBottom: "10px" }}>
@@ -47,11 +56,29 @@ const PatientPage = () => {
       </Typography>
       <Typography>ssn: {patient.ssn}</Typography>
       <Typography>occupation: {patient.occupation}</Typography>
-      
+
       <Typography variant="h5" style={{ marginTop: "20px", fontWeight: "bold" }}>
         entries
       </Typography>
-      {/* Entries rendering will be added in upcoming steps */}
+
+      {patient.entries.map((entry: Entry) => (
+        <Box key={entry.id} sx={{ marginTop: 2, marginBottom: 2 }}>
+          <Typography variant="body1">
+            <strong>{entry.date}</strong> <em>{entry.description}</em>
+          </Typography>
+            {entry.diagnosisCodes && entry.diagnosisCodes.length > 0 && (
+  <List dense>
+    {entry.diagnosisCodes.map((code) => (
+      <ListItem key={code} disablePadding>
+        <ListItemText
+          primary={`${code} ${getDiagnosisName(code)}`}
+        />
+      </ListItem>
+    ))}
+  </List>
+)}
+        </Box>
+      ))}
     </Box>
   );
 };
