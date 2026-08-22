@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { Gender, HealthCheckRating, NewPatient, NewEntry } from "./types.js";
+import { Gender, HealthCheckRating } from "./types.js";
+import type { NewPatient, NewEntry } from "./types.js";
 
 export const NewPatientSchema = z.object({
   name: z.string(),
